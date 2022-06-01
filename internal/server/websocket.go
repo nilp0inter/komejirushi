@@ -15,7 +15,7 @@ import (
 
 var addr = "localhost:8080"
 
-var upgrader = websocket.Upgrader{} // use default options
+var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }} // use default options
 
 func responder(c *websocket.Conn) chan<- commands.SearchResponse {
 	out := make(chan commands.SearchResponse)

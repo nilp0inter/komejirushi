@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Echo</title>
+  <script src="echo.js"></script>
+</head>
+<body>
+  <div id="elm-node"></div>
+  <script>
+    var app = Elm.Main.init({node: document.getElementById("elm-node")});
+    var ws = new WebSocket("ws://127.0.0.1:8080/commands");
+    ws.onmessage = function(message)
+    {
+        console.log(message);
+        app.ports.websocketIn.send(message.data);
+    };
+    app.ports.websocketOut.subscribe(function(msg) { ws.send(JSON.stringify({"command": "search", "payload": {"term": msg}})); });
+  </script>
+</body>
+</html>

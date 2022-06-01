@@ -57,7 +57,7 @@ func MakeSearch(c config.Config, term string, out chan<- commands.SearchResponse
 			entries := make(chan commands.TaggedSearchResult)
 			go func() {
 				defer close(entries)
-				rows, err := db.Query("select name from searchIndex where subsetchrs(?, name)", term)
+				rows, err := db.Query("select name, path from searchIndex where subsetchrs(?, name)", term)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -65,7 +65,8 @@ func MakeSearch(c config.Config, term string, out chan<- commands.SearchResponse
 
 				for rows.Next() {
 					var name string
-					err = rows.Scan(&name)
+					var path string
+					err = rows.Scan(&name, &path)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -73,7 +74,7 @@ func MakeSearch(c config.Config, term string, out chan<- commands.SearchResponse
 					if s > -1 {
 						entries <- commands.TaggedSearchResult{
 							Docset: ds,
-							Result: commands.SearchResult{Name: name, Score: s},
+							Result: commands.SearchResult{Name: name, Score: s, Url: path},
 						}
 					}
 				}
@@ -89,7 +90,7 @@ func MakeSearch(c config.Config, term string, out chan<- commands.SearchResponse
 	t := 0
 
 	chunk := make(map[string][]commands.SearchResult)
-	ticker := time.NewTicker(50 * time.Millisecond)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	merged := merge(results...)
 R:
 	for {
@@ -101,12 +102,19 @@ R:
 			}
 			t++
 			chunk[r.Docset] = append(chunk[r.Docset], r.Result)
-		case <-ticker.C:
-			fmt.Println("partial:", t)
-			t = 0
-			if len(chunk) != 0 {
+			if t >= 10000 {
+				fmt.Println("partial:", t)
 				out <- commands.SearchResponse{Results: chunk}
 				chunk = make(map[string][]commands.SearchResult)
+				t = 0
+				ticker.Reset(100 * time.Millisecond)
+			}
+		case <-ticker.C:
+			if len(chunk) != 0 {
+				fmt.Println("partial:", t)
+				out <- commands.SearchResponse{Results: chunk}
+				chunk = make(map[string][]commands.SearchResult)
+				t = 0
 			}
 		}
 	}

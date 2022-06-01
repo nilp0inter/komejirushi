@@ -1,16 +1,16 @@
 package commands
 
 type SearchResult struct {
-	Name  string
-	Score int
-	Url   string
+	Name  string `json:"n"`
+	Score int    `json:"s"`
+	Url   string `json:"u"`
 }
 
 type TaggedSearchResult struct {
-	Docset string
-	Result SearchResult
+	Docset string       `json:"ds"`
+	Result SearchResult `json:"rs"`
 }
 
 type SearchResponse struct {
-	Results map[string][]SearchResult
+	Results map[string][]SearchResult `json:"results"`
 }
