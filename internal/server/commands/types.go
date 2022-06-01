@@ -3,10 +3,10 @@ package commands
 import "encoding/json"
 
 type ServerCommand struct {
-	command string
-	payload json.RawMessage
+	Command string
+	Payload json.RawMessage
 }
 
 type SearchPayload struct {
-	term string
+	Term string
 }
